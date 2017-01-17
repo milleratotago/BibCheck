@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
+	<classpathentry kind="src" path="/jabref"/>
+	<classpathentry kind="lib" path="C:/Users/jeff.JF-i524c/.gradle/caches/modules-2/files-2.1/org.apache.commons/commons-lang3/3.5/6c6c702c89bfff3cd9e80b04d668c5e190d588c6/commons-lang3-3.5.jar" sourcepath="C:/Users/jeff.JF-i524c/.gradle/caches/modules-2/files-2.1/org.apache.commons/commons-lang3/3.5/f7d878153e86a1cdddf6b37850e00a9f8bff726f/commons-lang3-3.5-sources.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
