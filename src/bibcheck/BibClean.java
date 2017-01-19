@@ -11,7 +11,6 @@ public class BibClean {
 
     // NEWJEFF: To do:
     //  non-ASCII is not being copied correctly.
-    //  More general Journal replacement allowing, eg, for leading "The"
 	
     protected static BibHandler bh;
     protected static PrintWriter cleanBibWriter;
@@ -24,7 +23,7 @@ public class BibClean {
         // Read the input bib file:
         bh = new BibHandler("C:/Jabref/allmgc.bib", "C:/Jabref/allmgc.clean");
         bh.ReadBibFile();
-        System.out.println("Read the input bib file.");
+        System.out.println("Done reading the input bib file.");
 
         KillField("*", "timestamp");
         KillField("article", "address");
@@ -42,13 +41,7 @@ public class BibClean {
         ReplaceInField("*", "address", "\\Q.\\E\\Z", "");
         ReplaceInField("*", "publisher", "\\Q.\\E\\Z", "");
 
-        FileArrayProvider fap = new FileArrayProvider();
-        try {
-            String[] JournalsWithAmpersands = fap.readLines("C:/JabRef/JournalsWithAmpersands.txt");
-            ReplaceAndWithAmpersand("*", "journal", JournalsWithAmpersands);
-        } catch (IOException e) {
-            System.out.println("Could not find file JournalsWithAmpersands.txt");
-        }
+        ReplaceJournalTitles();
 
         // Write out the revised database
         System.out.println("Writing out the cleaned database.");
@@ -72,6 +65,7 @@ public class BibClean {
                 entry.clearField(fieldNameA); // , eventSource);
             }
         }
+        if (NKilled>0)
         System.out.format("Removed %d %s fields from %s references with %s.\n", NKilled, fieldNameA, entryType, fieldNameB);
     }
 
@@ -87,6 +81,7 @@ public class BibClean {
                 entry.clearField(fieldName); // , eventSource);
             }
         }
+        if (NKilled>0)
         System.out.format("Removed %d %s fields from %s references.\n", NKilled, fieldName, entryType);
     }
 
@@ -105,29 +100,28 @@ public class BibClean {
                 }
             }
         }
+        if (NReplaced>0)
         System.out.format("Replaced %s with %s in %d %s fields from %s references.\n", oldPat, newPat, NReplaced,
                 fieldName, entryType);
     }
 
-    public static void ReplaceAndWithAmpersand(String entryType, String fieldName, String[] oldStrings) {
-        int NReplaced = 0; // Counts modified entries, but there could be multiple replacements in one entry.
-        EntryEventSource eventSource = EntryEventSource.LOCAL;
-        for (BibEntry entry : bh.entries) {
-            if (((entryType.equals("*")) || (entryType.equalsIgnoreCase(entry.getType()))) &&
-                    (FieldReporter.FieldPresent(entry, fieldName))) {
-                // Make replacements in field, if any
-                String oldS = entry.getField(fieldName).orElse("");
-                if (ArrayUtils.contains(oldStrings, oldS)) {
-                    String newS = oldS.replaceAll(" and ", " \\& ");
-                    NReplaced++;
-                    entry.setField(fieldName, newS, eventSource);
-                }
-            }
+    public static void ReplaceJournalTitles() {
+        // Read a tab-separated file with Alias-Correct_name pairs on each line and
+    	// replace any occurrences of the alias with the correct name.
+    	FileArrayProvider fap = new FileArrayProvider();
+    	String[] AliasCorrectLines;
+        try {
+            AliasCorrectLines = fap.readLines("C:/JabRef/JournalNameCorrections.tab");
+        } catch (IOException e) {
+            System.out.println("Could not find the file JournalNameCorrections.tab");
+            return;
         }
-        System.out.format("Replaced 'and' with '&' in %d %s fields from %s references.\n", NReplaced, fieldName,
-                entryType);
+        String[] OnePair = new String[2];
+        for (String s : AliasCorrectLines) {
+        	OnePair = s.split("\t");
+        	ReplaceInField("article", "journal", OnePair[0], OnePair[1]);
+        }
 
     }
-
 
 }

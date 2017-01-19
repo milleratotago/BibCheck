@@ -24,11 +24,12 @@ public class BibCatalog {
         System.out.println("Hello world!");
 
         // Read the input bib file:
+        System.out.println("Reading the input bib file.");
         bh = new BibHandler("C:/Jabref/allmgc.bib", "null");
         bh.ReadBibFile();
-        System.out.println("Read the input bib file.");
 
         // Open the output file to hold the generated reports.
+        System.out.println("Opening the output catalog file.");
         try {
             catalogWriter = new PrintWriter("C:/JabRef/BibCatalog.txt", "UTF-8");
         } catch (IOException e) {
