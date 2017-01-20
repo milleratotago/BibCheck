@@ -41,6 +41,8 @@ public class BibCatalog {
         TypeAndFieldCounts();
 
         FieldContents();
+        
+        ListNonAscii();
 
         catalogWriter.close();
 
@@ -119,4 +121,26 @@ public class BibCatalog {
 
     }
 
-}
+    public static void ListNonAscii() {
+        System.out.println("Detecting NonAscii characters.");
+        for (BibEntry entry : bh.entries) {
+            // String thisType = entry.getType();
+            // Add the counts for this entry's fields.
+            Set<String> thisFieldList = entry.getFieldNames();
+            for (String sField : thisFieldList) {
+            	String s = entry.getField(sField).orElse("A");
+            	String BadChars = "";
+                Boolean NonAscii = false;
+            	for (int i=1; i<s.length();i++) {
+            		Boolean ThisBad = (s.charAt(i) >= 128);
+                	if (ThisBad) catalogWriter.format("%s has NonAscii char '%s' at character %d in %s field.\n",entry.getCiteKeyOptional().orElse("NOKEY"),s.charAt(i),i,sField);
+            		// if (ThisBad) BadChars += s.charAt(i);
+            		// NonAscii = (NonAscii || ThisBad);
+            	}
+            	// if (NonAscii) catalogWriter.format("%s has NonAscii chars '%s' in %s field.\n",entry.getCiteKeyOptional().orElse("NOKEY"),BadChars,sField);
+                }
+            }
+        }
+	
+    }
+

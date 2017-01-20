@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
 
+import net.sf.jabref.Globals;
 import net.sf.jabref.logic.exporter.BibDatabaseWriter;
 import net.sf.jabref.logic.exporter.BibtexDatabaseWriter;
 import net.sf.jabref.logic.exporter.FileSaveSession;
@@ -57,15 +58,16 @@ public class BibHandler {
             System.out.println("Unable to read input bib file.");
             System.exit(1);
             return;
-        } // catch (NullPointerException e) {
-          // System.out.println("Finished reading the input bib file.");
-          // Retrieve the individual entries in the database for processing.
+        }
+        // System.out.println("Finished reading the input bib file.");
+        // Retrieve the individual entries in the database for processing.
         db = dbc.getDatabase();
         entries = db.getEntries();
     }
 
     public void WriteBibFile() {
         try {
+        	// prefs = result.getBibDatabaseContext().getMetaData().getEncoding().orElse(Globals.prefs.getDefaultEncoding());
             session = databaseWriter.saveDatabase(dbc, prefs);
             // Show just a warning message if encoding did not work for all characters:
             if (!session.getWriter().couldEncodeAll()) {

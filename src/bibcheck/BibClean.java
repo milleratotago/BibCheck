@@ -9,11 +9,12 @@ import java.io.IOException;
 
 public class BibClean {
 
-    // NEWJEFF: To do:
-    //  non-ASCII is not being copied correctly.
+    // WARNING:
+    //  Non-ASCII characters are not copied correctly, so use BibCatalog & editor to make sure there aren't any.
 	
     protected static BibHandler bh;
     protected static PrintWriter cleanBibWriter;
+    protected static Boolean SomethingChanged = false;
 
     public static void main(String[] args) {
         // Utility to clean a database
@@ -43,10 +44,14 @@ public class BibClean {
 
         ReplaceJournalTitles();
 
-        // Write out the revised database
-        System.out.println("Writing out the cleaned database.");
-        bh.WriteBibFile();
-        // Writing the entire database ends here
+        if (SomethingChanged) {
+        	// Write out the revised database
+            System.out.println("Writing out the cleaned database.");
+            bh.WriteBibFile();
+            // Writing the entire database ends here
+        } else {
+        	System.out.println("No changes needed.");
+        }
 
         System.out.println("Goodbye world!");
 
@@ -65,8 +70,10 @@ public class BibClean {
                 entry.clearField(fieldNameA); // , eventSource);
             }
         }
-        if (NKilled>0)
-        System.out.format("Removed %d %s fields from %s references with %s.\n", NKilled, fieldNameA, entryType, fieldNameB);
+        if (NKilled>0) {
+        	System.out.format("Removed %d %s fields from %s references with %s.\n", NKilled, fieldNameA, entryType, fieldNameB);
+        	SomethingChanged = true;
+        }
     }
 
     public static void KillField(String entryType, String fieldName) {
@@ -81,8 +88,10 @@ public class BibClean {
                 entry.clearField(fieldName); // , eventSource);
             }
         }
-        if (NKilled>0)
-        System.out.format("Removed %d %s fields from %s references.\n", NKilled, fieldName, entryType);
+        if (NKilled>0) {
+        	System.out.format("Removed %d %s fields from %s references.\n", NKilled, fieldName, entryType);
+        	SomethingChanged = true;
+        }
     }
 
     public static void ReplaceInField(String entryType, String fieldName, String oldPat, String newPat) {
@@ -100,9 +109,10 @@ public class BibClean {
                 }
             }
         }
-        if (NReplaced>0)
-        System.out.format("Replaced %s with %s in %d %s fields from %s references.\n", oldPat, newPat, NReplaced,
-                fieldName, entryType);
+        if (NReplaced>0) {
+        	System.out.format("Replaced %s with %s in %d %s fields from %s references.\n", oldPat, newPat, NReplaced, fieldName, entryType);
+          	SomethingChanged = true;
+        }
     }
 
     public static void ReplaceJournalTitles() {
