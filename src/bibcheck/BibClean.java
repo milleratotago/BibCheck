@@ -2,6 +2,7 @@ package bibcheck;
 
 import java.io.PrintWriter;
 import net.sf.jabref.model.entry.BibEntry;
+import net.sf.jabref.model.entry.FieldName;
 import net.sf.jabref.model.entry.event.EntryEventSource;
 
 import org.apache.commons.lang3.ArrayUtils;
@@ -11,7 +12,10 @@ public class BibClean {
 
     // WARNING:
     //  Non-ASCII characters are not copied correctly, so use BibCatalog & editor to make sure there aren't any.
-	
+
+    // TODO:
+	//   DOI corrections
+
     protected static BibHandler bh;
     protected static PrintWriter cleanBibWriter;
     protected static Boolean SomethingChanged = false;
@@ -26,21 +30,21 @@ public class BibClean {
         bh.ReadBibFile();
         System.out.println("Done reading the input bib file.");
 
-        KillField("*", "timestamp");
-        KillField("article", "address");
-        KillField("article", "issn");
-        KillField("article", "publisher");
-        KillFieldAifB("*", "url", "doi");
+        KillField("*", FieldName.TIMESTAMP);
+        KillField("article", FieldName.ADDRESS);
+        KillField("article", FieldName.ISSN);
+        KillField("article", FieldName.PUBLISHER);
+        KillFieldAifB("*", FieldName.URL, FieldName.DOI);
 
         // Replace '{\&}' with '\&' in journals, but...
-        ReplaceInField("*", "journal", "\\Q{\\&}\\E", "\\&");
+        ReplaceInField("*", FieldName.JOURNAL, "\\Q{\\&}\\E", "\\&");
         // Replacing {\&} with \& is complicated due to escape sequences & regex!
         // \Q tells regex to "escape" to quoted mode and \E signals the end of the mode.
 
         // Kill any final period in address or publisher field.
         // \Q quotes the period (which is otherwise any character) and \Z ends the string.
-        ReplaceInField("*", "address", "\\Q.\\E\\Z", "");
-        ReplaceInField("*", "publisher", "\\Q.\\E\\Z", "");
+        ReplaceInField("*", FieldName.ADDRESS, "\\Q.\\E\\Z", "");
+        ReplaceInField("*", FieldName.PUBLISHER, "\\Q.\\E\\Z", "");
 
         ReplaceJournalTitles();
 
@@ -129,7 +133,7 @@ public class BibClean {
         String[] OnePair = new String[2];
         for (String s : AliasCorrectLines) {
         	OnePair = s.split("\t");
-        	ReplaceInField("article", "journal", OnePair[0], OnePair[1]);
+        	ReplaceInField("article", FieldName.JOURNAL, OnePair[0], OnePair[1]);
         }
 
     }
