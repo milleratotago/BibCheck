@@ -17,6 +17,10 @@ import net.sf.jabref.model.entry.FileField;
 import net.sf.jabref.model.entry.ParsedFileField;
 import net.sf.jabref.model.metadata.FileDirectoryPreferences;
 
+import java.util.stream.Collectors;
+// Stream handling stuff:
+import java.util.stream.Stream;
+
 public class BibCatalog {
 
 	// To do:
@@ -33,6 +37,7 @@ public class BibCatalog {
 		System.out.println("Reading the input bib file.");
 		bh = new BibHandler("C:/Jabref/allmgc.bib", "null");
 		bh.ReadBibFile();
+		// int NRefs = bh.entries.size();
 
 		// Open the output file to hold the generated reports.
 		System.out.println("Opening the output catalog file.");
@@ -44,6 +49,35 @@ public class BibCatalog {
 			// Do something
 		}
 
+		List<BibEntry> some = bh.entries.stream().filter(
+				t->t.hasField(FieldName.FILE)
+				&!t.getFieldAsWords(FieldName.KEYWORDS).contains("eprint"))
+                .collect(Collectors.toList());
+		PrintEntryKeys("Entries with file but no eprint keyword:",some);
+
+		PrintEntryKeys("Entries with eprint keyword but no file:",
+				bh.entries.stream().filter(
+				t->!t.hasField(FieldName.FILE)
+				&t.getFieldAsWords(FieldName.KEYWORDS).contains("eprint"))
+                .collect(Collectors.toList()));
+
+		PrintEntryKeys("Entries with doi but no doi keyword:",
+				bh.entries.stream().filter(
+				t->t.hasField(FieldName.DOI)
+				&!t.getFieldAsWords(FieldName.KEYWORDS).contains("doi"))
+                .collect(Collectors.toList()));
+
+		PrintEntryKeys("Entries with doi keyword but no doi:",
+				bh.entries.stream().filter(
+				t->!t.hasField(FieldName.DOI)
+				&t.getFieldAsWords(FieldName.KEYWORDS).contains("doi"))
+                .collect(Collectors.toList()));
+		
+		PrintEntryKeys("Entries with no keyword field:",
+				bh.entries.stream().filter(
+				t->!t.hasField(FieldName.KEYWORDS))
+                .collect(Collectors.toList()));
+		
 		CheckEprints();
 
 		ListNonAscii();
@@ -222,6 +256,16 @@ public class BibCatalog {
 		}
 		catalogWriter.format("\n");
 
+	}  // CheckEprints
+	
+	public static void PrintEntryKeys(String sTitle, List<BibEntry> thisList) {
+		if (thisList.size()<1) return;
+		System.out.println(sTitle);
+		catalogWriter.format("%s\n",sTitle);
+		for (BibEntry entry : thisList) {
+			catalogWriter.format("%s\n", entry.getCiteKeyOptional().get());
+		}
+		catalogWriter.format("\n");
 	}
 
 } // end of class

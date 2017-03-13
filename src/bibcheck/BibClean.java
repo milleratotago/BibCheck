@@ -15,6 +15,7 @@ public class BibClean {
 
     // TODO:
 	//   DOI corrections
+	//   CHECK FOR IN PRESS PAGES EARLIER THAN CURRENT YEAR
 
     protected static BibHandler bh;
     protected static PrintWriter cleanBibWriter;
@@ -45,6 +46,7 @@ public class BibClean {
         // \Q quotes the period (which is otherwise any character) and \Z ends the string.
         ReplaceInField("*", FieldName.ADDRESS, "\\Q.\\E\\Z", "");
         ReplaceInField("*", FieldName.PUBLISHER, "\\Q.\\E\\Z", "");
+        ReplaceInField("*", FieldName.DOI, "//", "/");  // Replace 2 forward slashes with one in DOIs
 
         ReplaceJournalTitles();
 
@@ -119,6 +121,26 @@ public class BibClean {
         }
     }
 
+    public static void ReplaceExactField(String entryType, String fieldName, String oldVal, String newVal) {
+        int NReplaced = 0; // Counts modified entries, but there could be multiple replacements in one entry.
+        EntryEventSource eventSource = EntryEventSource.LOCAL;
+        for (BibEntry entry : bh.entries) {
+            if (((entryType.equals("*")) || (entryType.equalsIgnoreCase(entry.getType()))) &&
+                    (FieldReporter.FieldPresent(entry, fieldName))) {
+                // Make replacements in field, if any
+                String oldS = entry.getField(fieldName).orElse("");
+                if (oldS.equals(oldVal)) {
+                    NReplaced++;
+                    entry.setField(fieldName, newVal, eventSource);
+                }
+            }
+        }
+        if (NReplaced>0) {
+        	System.out.format("Replaced %s with %s in %d %s fields from %s references.\n", oldVal, newVal, NReplaced, fieldName, entryType);
+          	SomethingChanged = true;
+        }
+    }
+
     public static void ReplaceJournalTitles() {
         // Read a tab-separated file with Alias-Correct_name pairs on each line and
     	// replace any occurrences of the alias with the correct name.
@@ -133,7 +155,7 @@ public class BibClean {
         String[] OnePair = new String[2];
         for (String s : AliasCorrectLines) {
         	OnePair = s.split("\t");
-        	ReplaceInField("article", FieldName.JOURNAL, OnePair[0], OnePair[1]);
+        	ReplaceExactField("article", FieldName.JOURNAL, OnePair[0], OnePair[1]);
         }
 
     }
