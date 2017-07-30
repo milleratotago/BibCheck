@@ -78,6 +78,36 @@ public class BibCatalog {
 				t->!t.hasField(FieldName.KEYWORDS))
                 .collect(Collectors.toList()));
 		
+		PrintEntryKeys("Entries with jomprja1 keyword but no doi:",
+				bh.entries.stream().filter(
+				t->!t.hasField(FieldName.DOI)
+				&t.getFieldAsWords(FieldName.KEYWORDS).contains("jomprja1"))
+                .collect(Collectors.toList()));
+
+		PrintEntryKeys("Entries with jomprja1 keyword but no pmid:",
+				bh.entries.stream().filter(
+				t->!t.hasField(FieldName.PMID)
+				&t.getFieldAsWords(FieldName.KEYWORDS).contains("jomprja1"))
+                .collect(Collectors.toList()));
+
+		PrintEntryKeys("Entries with jomprja1 keyword but no volume:",
+				bh.entries.stream().filter(
+				t->!t.hasField(FieldName.VOLUME)
+				&t.getFieldAsWords(FieldName.KEYWORDS).contains("jomprja1"))
+                .collect(Collectors.toList()));
+
+		PrintEntryKeys("Entries with jomprja1 keyword but no number:",
+				bh.entries.stream().filter(
+				t->!t.hasField(FieldName.NUMBER)
+				&t.getFieldAsWords(FieldName.KEYWORDS).contains("jomprja1"))
+                .collect(Collectors.toList()));
+
+		PrintEntryKeys("Entries with jomprja1 keyword but no pages:",
+				bh.entries.stream().filter(
+				t->!t.hasField(FieldName.PAGES)
+				&t.getFieldAsWords(FieldName.KEYWORDS).contains("jomprja1"))
+                .collect(Collectors.toList()));
+
 		CheckEprints();
 
 		ListNonAscii();

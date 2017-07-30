@@ -26,6 +26,24 @@ public class BibClean {
 
         System.out.println("Hello world!");
 
+        Boolean ShortTest = false;
+        
+        if (ShortTest) {
+        	// Some tests fooling around with regex.
+        	String oldS = "(Hedges' g> = 0.20; CI\\textsubscript{95%} -0.11~0.51; k = 6) to published studies";
+        	String oldPat = "\\Q\\textsubscript\\E\\{([^}]+)\\}";  // Note doubled backslashes required here
+        	String newPat = "_{$1}";
+        	newPat = "\\$$1\\$";
+            String newS = oldS.replaceAll(oldPat, newPat);
+            System.out.println("Using patterns");
+            System.out.println(oldPat);
+            System.out.println(newPat);
+            System.out.println(oldS);
+            System.out.println("changed to");
+            System.out.println(newS);
+        	
+        } else {
+        
         // Read the input bib file:
         bh = new BibHandler("C:/Jabref/allmgc.bib", "C:/Jabref/allmgc.clean");
         bh.ReadBibFile();
@@ -35,6 +53,9 @@ public class BibClean {
         KillField("article", FieldName.ADDRESS);
         KillField("article", FieldName.ISSN);
         KillField("article", FieldName.PUBLISHER);
+        KillField("article", "document_type");
+        KillField("article", "source");
+        KillField("article", "refid");
         KillFieldAifB("*", FieldName.URL, FieldName.DOI);
 
         // Replace '{\&}' with '\&' in journals, but...
@@ -49,6 +70,8 @@ public class BibClean {
         ReplaceInField("*", FieldName.DOI, "//", "/");  // Replace 2 forward slashes with one in DOIs
 
         ReplaceJournalTitles();
+        ReplaceFieldTextFromFile("*", FieldName.ABSTRACT, "C:/JabRef/AbstractCorrections.tab");
+        ReplaceFieldTextFromFile("*", FieldName.TITLE, "C:/JabRef/TitleCorrections.tab");
 
         if (SomethingChanged) {
         	// Write out the revised database
@@ -58,6 +81,8 @@ public class BibClean {
         } else {
         	System.out.println("No changes needed.");
         }
+
+        } // % end else from ShortTest
 
         System.out.println("Goodbye world!");
 
@@ -157,7 +182,24 @@ public class BibClean {
         	OnePair = s.split("\t");
         	ReplaceExactField("article", FieldName.JOURNAL, OnePair[0], OnePair[1]);
         }
+    }
 
+    public static void ReplaceFieldTextFromFile(String entryType, String fieldName, String fileName) {
+        // Read a tab-separated file with Alias-Correct_name pairs on each line and
+    	// replace any occurrences of the alias with the correct name.
+    	FileArrayProvider fap = new FileArrayProvider();
+    	String[] AliasCorrectLines;
+        try {
+            AliasCorrectLines = fap.readLines(fileName);
+        } catch (IOException e) {
+            System.out.println("ReplaceFieldTextFromFile could not find the requested file.");
+            return;
+        }
+        String[] OnePair = new String[2];
+        for (String s : AliasCorrectLines) {
+        	OnePair = s.split("\t");
+        	ReplaceInField(entryType, fieldName, OnePair[0], OnePair[1]);
+        }
     }
 
 }
