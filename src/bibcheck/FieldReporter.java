@@ -13,7 +13,7 @@ public class FieldReporter {
     protected String TargetField;
 
     public FieldReporter() {
-        MyTOC = new TreeMap<>();
+        MyTOC = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     }
 
     public static boolean FieldPresent(BibEntry entry, String fieldName) {

@@ -1,13 +1,14 @@
 package bibcheck;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.Set;
-import java.util.Iterator;
+import java.util.*;
+// import java.util.ArrayList;
+// import java.util.Arrays;
+// import java.util.List;
+// import java.util.Map;
+// import java.util.TreeMap;
+// import java.util.Set;
+// import java.util.Iterator;
 
 import net.sf.jabref.gui.FindUnlinkedFilesDialog;
 import net.sf.jabref.logic.util.io.FileUtil;
@@ -24,6 +25,10 @@ import java.util.stream.Stream;
 public class BibCatalog {
 
 	// To do:
+	//   CHECK FOR IN PRESS PAGES EARLIER THAN CURRENT YEAR
+	//   check for key vs eprint file name mismatches
+	//   In catalog of title words: remove starting quotes & capitalization, ending quotes & punctuation chars, separate words at ---
+	//   Catalog of journal names in articles with month field
 
 	protected static BibHandler bh;
 	protected static PrintWriter catalogWriter;
@@ -32,6 +37,18 @@ public class BibCatalog {
 		// Some basic demos:
 
 		System.out.println("Hello world!");
+		
+		// Set computer-specific paths
+		String ComputerName = System.getenv("COMPUTERNAME");
+		System.out.format("Computer name is %s.\n",ComputerName);
+		String ePrintsPath = "C:/ePrints";
+		if (ComputerName.equalsIgnoreCase("JF-HPEBA")) {
+			ePrintsPath = "C:/ePrints";
+		};
+		if (ComputerName.equalsIgnoreCase("JF-I524a")) {
+			ePrintsPath = "L:/ePrints";
+		};
+		// return;
 
 		// Read the input bib file:
 		System.out.println("Reading the input bib file.");
@@ -108,10 +125,14 @@ public class BibCatalog {
 				&t.getFieldAsWords(FieldName.KEYWORDS).contains("jomprja1"))
                 .collect(Collectors.toList()));
 
-		CheckEprints();
+		CheckEprints(ePrintsPath);
+		
+		CheckKeys();
 
 		ListNonAscii();
 
+		ListJournalsWithMonths();
+		
 		TypeAndFieldCounts();
 
 		FieldContents();
@@ -125,8 +146,8 @@ public class BibCatalog {
 		// Count the occurrences of the different entry types & of the different fields within each entry type.
 		// Each value of the entrytypeMap will be a TreeMap for the fields/counts of that entrytype.
 		System.out.println("Counting reference types and fields.");
-		TreeMap<String, Integer> entrytypeCountMap = new TreeMap<>();
-		TreeMap<String, TreeMap<String, Integer>> entrytypeFieldsMap = new TreeMap<>();
+		TreeMap<String, Integer> entrytypeCountMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+		TreeMap<String, TreeMap<String, Integer>> entrytypeFieldsMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 		for (BibEntry entry : bh.entries) {
 			String thisType = entry.getType();
 			if (!entrytypeCountMap.containsKey(thisType)) {
@@ -135,7 +156,7 @@ public class BibCatalog {
 			entrytypeCountMap.put(thisType, entrytypeCountMap.get(thisType) + 1);
 			// Make sure this entry type is in entrytypeMap
 			if (!entrytypeFieldsMap.containsKey(thisType)) {
-				entrytypeFieldsMap.put(thisType, new TreeMap<String, Integer>());
+				entrytypeFieldsMap.put(thisType, new TreeMap<String, Integer>(String.CASE_INSENSITIVE_ORDER));
 			}
 			TreeMap<String, Integer> thisfieldMap = entrytypeFieldsMap.get(thisType);
 			// Add the counts for this entry's fields.
@@ -180,6 +201,9 @@ public class BibCatalog {
 		rpt.ProcessEntries(bh.entries, FieldName.ADDRESS);
 		rpt.PrintTable(catalogWriter);
 		rpt.Clear();
+		rpt.ProcessEntries(bh.entries, FieldName.LANGUAGE);
+		rpt.PrintTable(catalogWriter);
+		rpt.Clear();
 
 		DelimFieldReporter drpt = new DelimFieldReporter(" and ");
 		drpt.ProcessEntries(bh.entries, FieldName.AUTHOR);
@@ -190,6 +214,16 @@ public class BibCatalog {
 		drpt2.ProcessEntries(bh.entries, FieldName.KEYWORDS);
 		drpt2.PrintTable(catalogWriter);
 		drpt2.Clear();
+
+		DelimFieldReporter drpt3 = new DelimFieldReporter(", ");
+		drpt3.ProcessEntries(bh.entries, FieldName.GROUPS);
+		drpt3.PrintTable(catalogWriter);
+		drpt3.Clear();
+
+		DelimFieldReporter drpt4 = new DelimFieldReporter(" ");
+		drpt4.ProcessEntries(bh.entries, FieldName.TITLE);
+		drpt4.PrintTable(catalogWriter);
+		drpt4.Clear();
 
 	}
 
@@ -215,20 +249,49 @@ public class BibCatalog {
 		}
 	}
 
-	public static void CheckEprints() {
+	public static void CheckKeys() {
+		// Check for any keys that are shortened versions of any other keys
+		ArrayList<String> ar = new ArrayList<String>();
+		for (BibEntry entry : bh.entries) {
+			ar.add(entry.getCiteKeyOptional().get());
+		}
+		Collections.sort(ar);
+//		catalogWriter.format("Sorted list of keys:\n");
+//		for  (String entry : ar) {
+//			catalogWriter.format("%s\n", entry);
+//		}
+//		catalogWriter.format("\n");
+
+		ArrayList<String> problemkeys = new ArrayList<String>();
+		String PrevEntry = "null0";
+		for  (String entry : ar) {
+//			if (entry.equalsIgnoreCase(PrevEntry+"a")) {
+	    	if (entry.indexOf(PrevEntry)>=0) {
+				problemkeys.add(PrevEntry);
+				}
+			PrevEntry = entry;
+		}
+		catalogWriter.format("Suspect keys:\n");
+		for  (String entry : problemkeys) {
+			catalogWriter.format("%s\n", entry);
+		}
+		catalogWriter.format("\n");
+	}
+	
+	public static void CheckEprints(String sEprintDir) {
 		System.out.println("Checking eprint files.");
 
 		// Get a list of all eprint files in the eprints directory:
 		// FileDirectoryPreferences fdPrefs;
 		// List<String> sEprintDir = bh.dbc.getFileDirectory();
-		String sEprintDir = "C:/eprints"; // I should be able to get this from metadata.
+		// String sEprintDir = "G:/eprints"; // I should be able to get this from metadata.
 		File folder = new File(sEprintDir);
 		File[] listOfFiles = folder.listFiles();
 		// boolean a = listOfFiles[1].isDirectory();
 		System.out.format("Found %d files in eprints folder %s.\n", listOfFiles.length, sEprintDir);
 
 		// Get a list of all the files claimed by the entries.
-		TreeMap<String, Integer> linkedEprints = new TreeMap<>((String.CASE_INSENSITIVE_ORDER));
+		TreeMap<String, Integer> linkedEprints = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 		for (BibEntry entry : bh.entries) {
 			String s = entry.getField(FieldName.FILE).orElse("");
 			if (s.length() > 0) {
@@ -296,6 +359,30 @@ public class BibCatalog {
 			catalogWriter.format("%s\n", entry.getCiteKeyOptional().get());
 		}
 		catalogWriter.format("\n");
+	}
+
+	public static void ListJournalsWithMonths() {
+		// List the names of journals with at least one database entry having both journal & month fields.
+        // Also count months for that journal.
+		System.out.println("Finding journals with entries having month fields.");
+		TreeMap<String, Integer> journalCountMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+		for (BibEntry entry : bh.entries) {
+			if ( entry.getField(FieldName.JOURNAL).isPresent() &  entry.getField(FieldName.MONTH).isPresent() ) {
+				String thisJournal = entry.getField(FieldName.JOURNAL).orElse("DISASTER");
+				if (!journalCountMap.containsKey(thisJournal)) {
+					journalCountMap.put(thisJournal, 0);
+				}
+				journalCountMap.put(thisJournal, journalCountMap.get(thisJournal) + 1);
+			}
+		}
+
+		// Print the article types & counts.
+		catalogWriter.format("Journals with month fields:\n");
+		for (Map.Entry<String, Integer> journal : journalCountMap.entrySet()) {
+			catalogWriter.format("% 6d : %s\n", journal.getValue(), journal.getKey());
+		}
+		catalogWriter.format("\n");
+
 	}
 
 } // end of class

@@ -22,18 +22,26 @@ public class SelectFields {
     public static void main(String[] args) {
         // Utility to clean a database
 
-        System.out.println("Hello world!");
+		// *** Select file names (further selection at *** below)
+    	String FilePath = "G:/eprints/";
+		String Infile = "MillerJeffBIB.bib";
+		String Outfile = "ToPub2.bib";
+
+		System.out.println("Hello world!");
 
         // Read the input bib file:
-        bh = new BibHandler("C:/Jabref/allmgc.bib", "C:/Jabref/allmgcSelected.bib");
+        bh = new BibHandler(FilePath+Infile, FilePath+Outfile);
         bh.ReadBibFile();
         System.out.println("Done reading the input bib file.");
 
+        // *** Select which fields to kill depending on what you want to share:
+        // KillField("*", "abstract");
+        // KillField("*", "pmid");
         KillField("*", FieldName.TIMESTAMP);
-        KillField("*", "jomnotes");
-        KillField("*", "jomhidden");
         KillField("*", "file");
         KillField("*", "groups");
+        KillField("*", "jomhidden");
+        KillField("*", "jomnotes");
         KillField("*", "keywords");
         KillField("*", "libaddr");
         KillField("*", "__markedentry");
